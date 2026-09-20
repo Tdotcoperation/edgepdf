@@ -1,36 +1,52 @@
 # Edge PDF Viewer
 
-An Edge-inspired PDF viewer built for Cloudflare Workers. The Worker serves static assets; PDF contents are opened, rendered, edited and exported **in your browser**, without uploading the document to this Worker.
+An Edge-inspired PDF viewer built for Cloudflare Workers. Local PDFs stay in your browser. When opening a remote PDF, the browser tries the original URL first and falls back to the Worker streaming proxy only when the direct request fails, such as due to CORS. The Worker **fetches PDF bytes, not renders the PDF**: PDF.js still renders and edits on the device.
 
-## Run locally
+## Run / deploy
 
 ```bash
 npm install
 npm run dev
-```
-
-## Deploy to Cloudflare Workers
-
-Sign in using `npx wrangler login`, then run:
-
-```bash
+# After npx wrangler login:
 npm run deploy
 ```
 
-Deploying through a connected Git repository is also possible in the Cloudflare dashboard; choose a Workers project and use `npm run deploy` as the deploy command. The repository contains `wrangler.jsonc` and a Worker entrypoint.
+The repository includes `wrangler.jsonc`, `worker.js` and static assets in `public/`. For Git-connected Workers deployments, set the deploy command to `npm run deploy`.
 
-## Features
+## Automatically open a PDF with an address-bar parameter
 
-- Open local PDFs, drag and drop, or load publicly accessible HTTP(S) URLs when their server permits browser CORS. URL downloads are limited to 100 MB.
-- Navigate with page number, thumbnails, PDF outline, fit-to-page, fit-width, zoom, rotate and fullscreen.
-- Select and copy PDF text using an approximate text overlay; search document text and navigate between results (page navigation, not highlighted result rectangles).
-- Draw ink, highlight, erase strokes, create/edit/delete notes and undo the most recent annotation on the current page.
-- Export a PDF with annotations flattened into its pages. Korean notes are drawn as rasterized images so their visible characters can be preserved, but cannot be text-selected in the exported PDF.
-- Open an annotated PDF in a new browser tab for printing, and read selected or current-page text with browser speech synthesis.
-- Autosave the most recently opened PDF and session annotations using local IndexedDB, with a restoration prompt when you return.
+Open the deployed viewer with a URL of this form:
 
-## Quality, privacy and limitations
+```text
+https://YOUR-WORKER.workers.dev/?url=https%3A%2F%2Fexample.com%2Fbook.pdf
+```
 
-**This is not a fixed 1200 DPI renderer and does not implement tiled raster rendering.** PDF.js retains source vector quality and re-renders as you zoom. Onscreen page canvases are capped at 16 million pixels and a device-pixel ratio of 2; canvases far outside the viewport are released. On unusually large or complex documents, the browser may still be slow. A separate high-memory PDF rendering service would be needed for genuine full-page 1200 DPI raster output.
+The query parameter is `url`; `pdf` is accepted as an alias. Use `encodeURIComponent(pdfUrl)` when constructing links, especially for PDF addresses containing `?` or `&`:
 
-There is no server-side arbitrary-URL proxy. Browser CORS, PDF access restrictions and encrypted file permissions still apply. Scanned PDFs need OCR for text search and speech synthesis; OCR is not included. Text selection on complex layouts may be imperfect. Notes and pen marks are flattened rather than exported as editable PDF annotation objects; very long note text may be clipped on export. A changed rotation applies to every page. Printing opens the generated annotated PDF; use that tab's PDF print control or Ctrl+P. Autosaved content is stored only in the current browser and may be cleared by browser storage policies. PDF.js and pdf-lib modules currently load from pinned external CDNs and require an internet connection.
+```js
+const link = `${viewerOrigin}/?url=${encodeURIComponent('https://example.com/book.pdf?page=1&download=1')}`;
+```
+
+If the URL parameter is present, that PDF is opened automatically rather than prompting to restore the previous browser draft. You can also use the **URL** button to open a remote PDF manually.
+
+### How the CORS fallback works
+
+1. Browser tries `fetch(originalPdfUrl)` directly.
+2. Only if that request rejects (CORS/network or mixed-content failure), it requests `/api/pdf?url=ENCODED_ORIGINAL_URL` from the same-origin Worker.
+3. Worker validates the target and redirects, fetches the public PDF without forwarding browser cookies or Authorization headers, checks the PDF signature, and streams at most 100 MB back with a PDF content type.
+4. PDF.js opens the returned bytes in the browser. Browser local-file uploads, edits and IndexedDB drafts are not sent to the Worker.
+
+**Limits:** This does not bypass logins, subscriptions, authorization, bot protection or upstream blocks on Cloudflare requests. If the remote site replies with HTML instead of a PDF, the proxy rejects it. The browser must still be able to load the viewer's external PDF.js/pdf-lib modules. Some servers disallow even server-side requests. A direct HTTP 403/404 is reported as such and does not trigger the CORS fallback.
+
+**Security:** Only public HTTP(S) hostnames are allowed; IP-literal, localhost/internal targets, same-origin targets, credential-bearing URLs and redirects to these are rejected. Only same-origin viewer browser requests may use the proxy. Size is capped at 100 MB and responses are not cached. For public deployments, strongly consider restricting allowed PDF hostnames with a comma-separated Wrangler environment variable `PDF_PROXY_HOSTS`, e.g. `books.example.org,cdn.example.org`; its absence allows arbitrary public hostnames. Do not include private passwords or signed access tokens in shareable viewer URL parameters: URLs may appear in browser history and request logs. This is not an authentication service or an open unrestricted proxy.
+
+## Other features
+
+- Open local PDFs and drag and drop; thumbnails, PDF outline and page navigation.
+- Fit, zoom, rotation, fullscreen, text selection/search and browser TTS.
+- Pen, highlighter, eraser, notes, undo, annotated PDF export and printing.
+- Autosave the last document and annotations to the browser's IndexedDB.
+
+## Quality / known limitations
+
+**Fixed 1200 DPI and tiled raster rendering are not implemented.** PDF.js preserves the source vector graphics and re-renders on zoom; canvases are limited to 16 million pixels per page and device-pixel ratio 2, and off-screen canvases are released to reduce browser memory load. The proxy does not increase rendering quality or memory available to the browser. Scanned PDFs need OCR for search and speech, which is not included. Text layout/selection can be imperfect on complex PDFs. Ink/notes export as flattened graphics, not editable PDF annotation objects. External CDN modules require an internet connection. Automatic saving is local to the current browser and can be cleared by its storage policies.
