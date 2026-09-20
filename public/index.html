@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#292929">
+  <title>Edge PDF Viewer</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <button id="sideBtn" title="탐색 창 열기/닫기">☰</button>
+    <span class="brand">▣</span><strong id="filename">Edge PDF Viewer</strong>
+    <span class="grow"></span>
+    <button id="openBtn">＋ 열기</button><button id="urlBtn" title="PDF URL 열기">🔗 URL</button>
+    <button id="printBtn" title="원본 PDF 인쇄">⎙ 인쇄</button><button id="saveBtn" class="primary" title="필기 포함 PDF 다운로드">↓ PDF 저장</button>
+    <button id="fullBtn" title="전체 화면">⛶</button>
+  </header>
+  <div class="toolbar">
+    <div class="group"><button id="prevBtn" title="이전 페이지">‹</button><input id="pageNo" aria-label="페이지 번호" type="number" min="1" value="1"><span id="total">/ 0</span><button id="nextBtn" title="다음 페이지">›</button></div>
+    <span class="divider"></span>
+    <div class="group"><button id="minusBtn" title="축소">−</button><select id="zoomVal" aria-label="확대 배율"><option value="fit">페이지 맞춤</option><option value="width">너비 맞춤</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1" selected>100%</option><option value="1.25">125%</option><option value="1.5">150%</option><option value="2">200%</option><option value="3">300%</option><option value="4">400%</option></select><button id="plusBtn" title="확대">＋</button><button id="rotateBtn" title="시계 방향 90도 회전">↻</button></div>
+    <span class="divider"></span>
+    <div class="group modes"><button class="tool active" data-tool="view" title="텍스트 선택">▧ 선택</button><button class="tool" data-tool="pen">✎ 펜</button><button class="tool" data-tool="highlight">▰ 형광펜</button><button class="tool" data-tool="eraser">⌫ 지우개</button><button class="tool" data-tool="note">▤ 메모</button></div>
+    <div class="group"><input id="color" type="color" value="#1967d2" title="펜 색상" aria-label="색상"><label for="size" class="tiny">굵기</label><input id="size" type="range" min="1" max="24" value="3" title="선 굵기"><span id="sizeText" class="tiny">3</span></div>
+    <span class="grow"></span><div class="group"><button id="undoBtn" title="현재 페이지 마지막 작업 취소">↶</button><button id="searchBtn">⌕ 검색</button><button id="readBtn">▷ 읽기</button><button id="stopBtn">■ 중지</button></div>
+  </div>
+  <div id="searchPanel" class="searchbar hidden"><input id="searchInput" type="search" placeholder="PDF 텍스트 검색" aria-label="검색어"><button id="searchPrev">↑</button><span id="searchCount">0개</span><button id="searchNext">↓</button><button id="searchClose" title="검색 닫기">×</button></div>
+  <div class="workspace">
+    <aside id="sidebar" class="hidden"><div class="tabs"><button id="thumbTab" class="active">페이지</button><button id="outlineTab">목차</button></div><div id="thumbs"></div><div id="outline" class="outline hidden"></div></aside>
+    <main id="viewport"><div id="pages"><div class="empty" id="empty"><div class="emptyIcon">▣</div><h1>PDF 문서를 열어 주세요</h1><p>파일을 끌어다 놓거나 파일 또는 URL을 선택하세요.</p><button id="emptyOpen" class="primary">파일 선택</button><p class="hint">원본 PDF는 서버에 업로드하지 않으며 브라우저에 자동 저장됩니다.</p></div></div></main>
+  </div>
+  <footer><span id="statusText">준비 완료 · 로컬 PDF 처리</span><span class="grow"></span><span>벡터 원본 유지 · 가시 영역 지연 렌더링 · 1200 DPI 고정 아님</span></footer>
+  <input id="file" type="file" accept=".pdf,application/pdf" hidden>
+  <div id="drop" class="drop">PDF 파일을 여기에 놓아 주세요.</div><div id="toast" class="toast" role="status" aria-live="polite"></div><div id="progress"></div>
+  <div id="urlModal" class="modal hidden"><form id="urlForm" class="dialog"><h2>PDF URL 열기</h2><p>공개 PDF URL만 사용할 수 있으며 PDF 제공 서버에서 CORS를 허용해야 합니다.</p><input type="url" id="urlInput" placeholder="https://example.com/file.pdf" required><div class="actions"><button type="button" id="urlCancel">취소</button><button type="submit" class="primary">열기</button></div></form></div>
+  <div id="noteModal" class="modal hidden"><form id="noteForm" class="dialog"><h2>메모</h2><textarea id="noteInput" rows="5" placeholder="메모 내용을 입력해 주세요" required></textarea><div class="actions"><button type="button" id="noteDelete" class="danger hidden">삭제</button><button type="button" id="noteCancel">취소</button><button type="submit" class="primary">저장</button></div></form></div>
+</body>
+</html>
