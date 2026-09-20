@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#292929">
   <title>Edge PDF Viewer</title>
   <link rel="stylesheet" href="/style.css">
+  <script src="/pdf-url-bridge.js"></script>
   <script type="module" src="/app.js"></script>
 </head>
 <body>
@@ -29,12 +30,12 @@
   <div id="searchPanel" class="searchbar hidden"><input id="searchInput" type="search" placeholder="PDF 텍스트 검색" aria-label="검색어"><button id="searchPrev">↑</button><span id="searchCount">0개</span><button id="searchNext">↓</button><button id="searchClose" title="검색 닫기">×</button></div>
   <div class="workspace">
     <aside id="sidebar" class="hidden"><div class="tabs"><button id="thumbTab" class="active">페이지</button><button id="outlineTab">목차</button></div><div id="thumbs"></div><div id="outline" class="outline hidden"></div></aside>
-    <main id="viewport"><div id="pages"><div class="empty" id="empty"><div class="emptyIcon">▣</div><h1>PDF 문서를 열어 주세요</h1><p>파일을 끌어다 놓거나 파일 또는 URL을 선택하세요.</p><button id="emptyOpen" class="primary">파일 선택</button><p class="hint">원본 PDF는 서버에 업로드하지 않으며 브라우저에 자동 저장됩니다.</p></div></div></main>
+    <main id="viewport"><div id="pages"><div class="empty" id="empty"><div class="emptyIcon">▣</div><h1>PDF 문서를 열어 주세요</h1><p>파일을 끌어다 놓거나 파일 또는 URL을 선택하세요.</p><button id="emptyOpen" class="primary">파일 선택</button><p class="hint">로컬 파일은 서버로 전송되지 않습니다. URL 불러오기는 CORS 실패 시 Workers를 사용합니다.</p></div></div></main>
   </div>
   <footer><span id="statusText">준비 완료 · 로컬 PDF 처리</span><span class="grow"></span><span>벡터 원본 유지 · 가시 영역 지연 렌더링 · 1200 DPI 고정 아님</span></footer>
   <input id="file" type="file" accept=".pdf,application/pdf" hidden>
   <div id="drop" class="drop">PDF 파일을 여기에 놓아 주세요.</div><div id="toast" class="toast" role="status" aria-live="polite"></div><div id="progress"></div>
-  <div id="urlModal" class="modal hidden"><form id="urlForm" class="dialog"><h2>PDF URL 열기</h2><p>공개 PDF URL만 사용할 수 있으며 PDF 제공 서버에서 CORS를 허용해야 합니다.</p><input type="url" id="urlInput" placeholder="https://example.com/file.pdf" required><div class="actions"><button type="button" id="urlCancel">취소</button><button type="submit" class="primary">열기</button></div></form></div>
+  <div id="urlModal" class="modal hidden"><form id="urlForm" class="dialog"><h2>PDF URL 열기</h2><p>공개 PDF를 먼저 직접 가져오며, CORS로 실패하면 Cloudflare Workers를 통해 가져옵니다. 로그인·유료 접근 제한은 우회할 수 없습니다.</p><input type="url" id="urlInput" placeholder="https://example.com/file.pdf" required><div class="actions"><button type="button" id="urlCancel">취소</button><button type="submit" class="primary">열기</button></div></form></div>
   <div id="noteModal" class="modal hidden"><form id="noteForm" class="dialog"><h2>메모</h2><textarea id="noteInput" rows="5" placeholder="메모 내용을 입력해 주세요" required></textarea><div class="actions"><button type="button" id="noteDelete" class="danger hidden">삭제</button><button type="button" id="noteCancel">취소</button><button type="submit" class="primary">저장</button></div></form></div>
 </body>
 </html>
