@@ -2,7 +2,7 @@ import * as pdfjs from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pd
 import { PDFDocument, rgb } from 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm';
 pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
 const $ = id => document.getElementById(id);
-const S = {pdf:null, bytes:null, name:'document.pdf', key:'', pages:[], notes:{}, current:1, zoom:1, fit:'manual', rotation:0, tool:'view', token:0, observer:null, sidebar:false, search:[], searchAt:-1, searchToken:0, saveTimer:null, noteDraft:null};
+const S = {pdf:null, bytes:null, name:'document.pdf', key:'', pages:[], notes:{}, current:1, zoom:1, fit:'fit', rotation:0, tool:'view', token:0, observer:null, sidebar:false, search:[], searchAt:-1, searchToken:0, saveTimer:null, noteDraft:null};
 const clamp = (v,min,max) => Math.max(min,Math.min(max,v));
 const progress = n => $('progress').style.width = n + '%';
 function toast(message){const el=$('toast');el.textContent=message;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),4200)}
@@ -23,7 +23,7 @@ async function load(input,name,restored=null){
     const old=S.pdf;S.token++;S.observer?.disconnect();S.pdf=null;
     if(old)await old.destroy().catch(()=>{});
     S.bytes=bytes;S.name=name||'document.pdf';S.key=keyFor(bytes,S.name);S.notes=restored?.key===S.key?(restored.notes||{}):{};
-    S.rotation=restored?.rotation||0;S.zoom=restored?.zoom||1;S.fit=restored?.fit||'manual';S.current=1;
+    S.rotation=restored?.rotation||0;S.zoom=restored?.zoom||1;S.fit=restored?.fit||'fit';S.current=1;
     $('filename').textContent=S.name;$('pages').replaceChildren();$('thumbs').replaceChildren();$('outline').replaceChildren();
     S.pdf=await pdfjs.getDocument({data:bytes.slice(),useSystemFonts:true}).promise;
     $('total').textContent='/ '+S.pdf.numPages;$('pageNo').max=S.pdf.numPages;
